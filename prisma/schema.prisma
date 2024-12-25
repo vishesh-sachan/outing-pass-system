@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  warden
+  guard
+}
+
+enum Status {
+  pending
+  approved
+  rejected
+  closed
+}
+
+enum Branch {
+  csecore
+  csecybersecurity
+  cseaiml
+  csedatascience
+  ece
+  eee
+  ee
+  civil
+  agriculture
+  nursing
+}
+
+enum Course {
+  btech
+  bsc
+  msc
+  mba
+  bba
+  bcom
+  bpharma
+  dpharma
+}
+
+enum Hostel {
+  kdbhawan
+  mlbhawan
+}
+
+model Student {
+  id                         Int      @id @default(autoincrement())
+  name                       String
+  fathersName                String
+  mothersName                String
+  course                     Course
+  branch                     Branch
+  year                       String
+  permanentAddress           String
+  localGaurdiansName         String?
+  localGaurdiansAddress      String?
+  personalPhoneNumber        String
+  fathersPhoneNumber         String
+  mothersPhoneNumber         String
+  localGaurdianPhoneNumber   String?
+  allotedRoomNo              String
+  hostel                     Hostel
+  dateOfJoining              String
+  email                      String   @unique
+  password                   String
+  outing                     OutingRequest[]
+}
+
+model faculty {
+  id                    Int      @id @default(autoincrement())
+  name                  String
+  fathersnName          String
+  mothersName           String
+  permanentAddress      String
+  personalPhoneNumber   String
+  fathersPhoneNumber    String
+  mothersPhoneNumber    String
+  allotedRoomNo         String
+  allotedHostel         Hostel
+  dateOfJoining         String
+  role                  Role
+  email                 String   @unique
+  password              String
+}
+
+model OutingRequest {
+  id               Int        @id @default(autoincrement())
+  studentId        Int
+  reason           String
+  status           Status     @default(pending)
+  startTime        DateTime
+  endTime          DateTime
+  actualstartTime  DateTime?
+  actualendTime    DateTime?
+  createdAt        DateTime   @default(now())
+  student          Student    @relation(fields: [studentId],references: [id])
+}
