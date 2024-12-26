@@ -18,12 +18,14 @@ export async function GET(req: Request) {
                 id: studentId
             }
         })
-        return NextResponse.json(res, { status: 200 });
-    } catch (error: any) {
-        if (error.code === "P2025") {
+
+        if (res === null) {
             return NextResponse.json({ error: "Student with this id does not exists" }, { status: 404 });
         }
 
+        return NextResponse.json(res, { status: 200 });
+    } catch (error: any) {
+        console.log(error);
         return NextResponse.json({ error: "error fetching data" }, { status: 500 });
     }
 }
@@ -63,6 +65,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ id: res.id }, { status: 200 })
 
     } catch (error) {
+        console.log(error);
         return NextResponse.json({ error: "error creating student entry" }, { status: 500 });
     }
 }
@@ -97,12 +100,16 @@ export async function PUT(req: Request) {
                 email
             }
         })
+
         return NextResponse.json({ msg: "Student info updated successfully" }, { status: 200 });
+
     } catch (error: any) {
+        
         if (error.code === "P2025") {
             return NextResponse.json({ error: "Student with this id does not exists" }, { status: 404 });
         }
 
+        console.log(error);
         return NextResponse.json({ error: "error updating data" }, { status: 500 });
     }
 }
@@ -123,11 +130,14 @@ export async function DELETE(req: Request) {
         });
 
         return NextResponse.json({ msg: "Student entry deleted successfully" }, { status: 200 });
+
     } catch (error: any) {
+
         if (error.code === "P2025") {
             return NextResponse.json({ error: "Student with this id does not exists" }, { status: 404 });
         }
-
+        console.log(error);
+        
         return NextResponse.json({ error: "Error deleting student entry" }, { status: 500 });
     }
 }
