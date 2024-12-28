@@ -51,6 +51,7 @@ export async function POST(req: Request) {
             reason,
             startTime: new Date(startTime),
             endTime: new Date(endTime),
+            createdAt: new Date(),
          },
          select: {
             id: true,
