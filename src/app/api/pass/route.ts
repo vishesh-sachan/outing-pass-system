@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -45,6 +46,10 @@ export async function POST(req: Request) {
          return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
 
+      const saltRounds = 10;
+      const value = `${studentId}${reason}`;
+      const encryptionKey = await bcrypt.hash(value, saltRounds);
+
       const res = await prisma.outingRequest.create({
          data: {
             studentId: Number(studentId),
@@ -52,6 +57,7 @@ export async function POST(req: Request) {
             startTime: new Date(startTime),
             endTime: new Date(endTime),
             createdAt: new Date(),
+            encryptionKey
          },
          select: {
             id: true,

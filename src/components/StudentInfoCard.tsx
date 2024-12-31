@@ -26,15 +26,16 @@ interface StudentInfo {
 
 export default function StudentInfoCard() {
     const { data: session, status } = useSession()
+    const studentId = session?.user?.id;
     const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
         async function getData() {
-            if (session?.user?.id) {
+            if (studentId) {
                 try {
                     setIsLoading(true)
-                    const res = await axios.get(`/api/student?studentId=${session.user.id}`)
+                    const res = await axios.get(`/api/student?studentId=${studentId}`)
                     setStudentInfo(res.data)
                 } catch (error) {
                     console.error('Error fetching student data:', error)
@@ -45,7 +46,7 @@ export default function StudentInfoCard() {
         }
 
         getData()
-    }, [session?.user?.id])
+    }, [studentId])
 
     if (status === "loading" || isLoading) {
         return <div className="p-4 text-center">Loading...</div>

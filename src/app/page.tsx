@@ -5,19 +5,31 @@ export default function Home() {
   const { data: session, status } = useSession();
 
   if (status === "loading") {
-    return <p>Loading...</p>;
+    return <p style={{ textAlign: 'center' }}>Loading...</p>;
   }
 
   if (!session) {
-    return <p>You are not signed in. Please sign in to access this page.</p>;
+    return (
+      <div style={{ textAlign: 'center' }}>
+        <p>You are not signed in. Please sign in to access this page.</p>
+        <div>
+          <a href="/api/auth/signin">Sign in</a>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <h1>Welcome, {session.user.name}</h1>
-      <p>Your email: {session.user.email}</p>
-      <p>Your ID: {session.user.id}</p>
-      <p>Your Role: {session.user.role}</p>
+    <div style={{ textAlign: 'center' }}>
+      <div>
+        <a href="/student">Student</a>
+      </div>
+      <div>
+        <a href="/faculty">Faculty</a>
+      </div>
+      <div>
+        <a href="/gaurd">Gaurd</a>
+      </div>
     </div>
   );
 }

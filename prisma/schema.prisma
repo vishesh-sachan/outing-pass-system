@@ -93,6 +93,7 @@ model OutingRequest {
   id               Int        @id @default(autoincrement())
   studentId        Int
   reason           String
+  encryptionKey    String
   status           Status     @default(pending)
   startTime        DateTime
   endTime          DateTime

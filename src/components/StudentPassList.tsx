@@ -9,21 +9,22 @@ interface Pass {
     status: 'pending' | 'approved' | 'rejected' | 'closed'
     startTime: string
     endTime: string
-    actualStartTime: string | null
-    actualEndTime: string | null
+    actualstartTime: string | null
+    actualendTime: string | null
     createdAt: string
 }
 
 export default function StudentPassList() {
     const { data: session, status: sessionStatus } = useSession()
+    const studentId = session?.user?.id;
     const [passes, setPasses] = useState<Pass[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
         async function fetchPasses() {
-            if (sessionStatus === 'authenticated' && session?.user?.id) {
+            if (sessionStatus === 'authenticated' && studentId) {
                 try {
-                    const response = await fetch(`/api/pass?studentId=${session.user.id}`)
+                    const response = await fetch(`/api/pass?studentId=${studentId}`)
                     const data = await response.json()
                     setPasses(data)
                 } catch (error) {
@@ -37,7 +38,7 @@ export default function StudentPassList() {
         if (sessionStatus !== 'loading') {
             fetchPasses()
         }
-    }, [session?.user?.id, sessionStatus])
+    }, [studentId, sessionStatus])
 
     if (sessionStatus === 'loading' || isLoading) {
         return (
@@ -79,14 +80,14 @@ export default function StudentPassList() {
                                     <p className="text-sm text-gray-600 mb-1">
                                         <strong>End Time:</strong> {new Date(pass.endTime).toLocaleString()}
                                     </p>
-                                    {pass.actualStartTime && (
+                                    {pass.actualstartTime && (
                                         <p className="text-sm text-gray-600 mb-1">
-                                            <strong>Actual Start Time:</strong> {new Date(pass.actualStartTime).toLocaleString()}
+                                            <strong>Actual Start Time:</strong> {new Date(pass.actualstartTime).toLocaleString()}
                                         </p>
                                     )}
-                                    {pass.actualEndTime && (
+                                    {pass.actualendTime && (
                                         <p className="text-sm text-gray-600 mb-1">
-                                            <strong>Actual End Time:</strong> {new Date(pass.actualEndTime).toLocaleString()}
+                                            <strong>Actual End Time:</strong> {new Date(pass.actualendTime).toLocaleString()}
                                         </p>
                                     )}
                                 </>

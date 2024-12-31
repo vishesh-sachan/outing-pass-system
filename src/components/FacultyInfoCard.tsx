@@ -22,15 +22,16 @@ interface FacultyInfoCard {
 
 export default function FacultyInfoCard() {
     const { data: session, status } = useSession()
+    const facultyId = session?.user?.id;
     const [facultyInfo, setFacultyInfo] = useState<FacultyInfoCard | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
         async function getData() {
-            if (session?.user?.id) {
+            if (facultyId) {
                 try {
                     setIsLoading(true)
-                    const res = await axios.get(`/api/faculty?facultyId=${session.user.id}`)
+                    const res = await axios.get(`/api/faculty?facultyId=${facultyId}`)
                     setFacultyInfo(res.data)
                 } catch (error) {
                     console.error('Error fetching faculty data:', error)
@@ -41,7 +42,7 @@ export default function FacultyInfoCard() {
         }
 
         getData()
-    }, [session?.user?.id])
+    }, [facultyId])
 
     if (status === "loading" || isLoading) {
         return <div className="p-4 text-center">Loading...</div>

@@ -9,8 +9,8 @@ interface Pass {
     status: 'pending' | 'approved' | 'rejected' | 'closed'
     startTime: string
     endTime: string
-    actualStartTime: string | null
-    actualEndTime: string | null
+    actualstartTime: string | null
+    actualendTime: string | null
     createdAt: string
 }
 

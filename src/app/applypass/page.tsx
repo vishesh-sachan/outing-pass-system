@@ -1,108 +1,156 @@
-"use client"
+"use client";
 
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import QRCode, { QRCodeToDataURLOptions } from "qrcode";
+import Image from "next/image";
 
 interface Pass {
-    id: number
-    studentId: number
-    reason: string
-    status: 'pending' | 'approved' | 'rejected' | 'closed'
-    startTime: string
-    endTime: string
-    actualStartTime: string | null
-    actualEndTime: string | null
-    createdAt: string
+    id: number;
+    studentId: number;
+    reason: string;
+    encryptionKey: string;
+    status: "pending" | "approved" | "rejected" | "closed";
+    startTime: string;
+    endTime: string;
+    actualstartTime: string | null;
+    actualendTime: string | null;
+    createdAt: string;
 }
 
-
 export default function ApplyPass() {
-
-    const { data: session, status } = useSession()
+    const { data: session, status } = useSession();
     const studentId = session?.user?.id;
-    const [hasActivePass, setHasActivePass] = useState(0);
-    const [pass, setPass] = useState<Pass>()
-    const [reason, setReason] = useState('');
-    const [startTime, setStartTime] = useState('');
-    const [endTime, setEndTime] = useState('');
-    const [date, setDate] = useState('');
-    const [dateError, setDateError] = useState('');
+    const [hasActivePass, setHasActivePass] = useState(0); // 0 = loading, 1 = active pass, 2 = no active pass
+    const [pass, setPass] = useState<Pass | null>(null);
+    const [reason, setReason] = useState("");
+    const [startTime, setStartTime] = useState("");
+    const [endTime, setEndTime] = useState("");
+    const [date, setDate] = useState("");
+    const [dateError, setDateError] = useState("");
+    const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    async function handleSubmit(e: React.FormEvent) {
+    const generateQrCode = async () => {
+        if (!pass) return;
+        const qrData = {
+            id: pass.id.toString(),
+            studentId: studentId.toString(),
+            reason: pass.reason,
+        };
+        try {
+            const options: QRCodeToDataURLOptions = {
+                errorCorrectionLevel: "high",
+            };
+            const url = await QRCode.toDataURL(JSON.stringify(qrData), options);
+            setQrCodeUrl(url);
+        } catch (err) {
+            console.error("Failed to generate QR code", err);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError("");
+        setLoading(true);
+
         const currentDate = new Date();
         const selectedDate = new Date(date);
         const startDateTime = `${date} ${startTime}:00`;
         const endDateTime = `${date} ${endTime}:00`;
+
         if (
             selectedDate.toDateString() === currentDate.toDateString() ||
-            selectedDate.toDateString() === new Date(currentDate.setDate(currentDate.getDate() + 1)).toDateString()
+            selectedDate.toDateString() ===
+                new Date(currentDate.setDate(currentDate.getDate() + 1)).toDateString()
         ) {
-            setDateError('');
+            setDateError("");
         } else {
-            setDateError('Date must be today or the next day');
+            setDateError("Date must be today or the next day");
+            setLoading(false);
+            return;
         }
+
         try {
-            const res = await axios.post('api/pass', { studentId, reason, startTime: startDateTime, endTime: endDateTime })
+            const res = await axios.post("/api/pass", {
+                studentId,
+                reason,
+                startTime: startDateTime,
+                endTime: endDateTime,
+            });
+
             if (res.status === 201) {
-                //web socket call
-                try {
-                    const socket = new WebSocket('ws://localhost:8080');
-                    socket.onopen = () => {
-                        socket.send(JSON.stringify({ isStudent: true, passId: res.data.id, studentId }));
-                    };
-                    socket.onerror = (error) => {
-                        console.log("Error in WebSocket connection:", error);
-                        setDateError('Error in WebSocket connection');
-                    };
-                } catch(e) {
-                    // console.log("Error in WebSocket:", e);
-                    setDateError('Error in WebSocket connection');
-                }
+                const newPass = res.data;
+                setPass(newPass);
+                setHasActivePass(1);
+
+                const socket = new WebSocket("ws://localhost:8080");
+                socket.onopen = () => {
+                    socket.send(
+                        JSON.stringify({
+                            isStudent: true,
+                            passId: newPass.id,
+                            studentId,
+                        })
+                    );
+                };
+                socket.onerror = (error) => {
+                    console.error("WebSocket connection error:", error);
+                    setError("Error in WebSocket connection");
+                };
+
                 alert("Pass applied successfully.");
-                
                 window.location.reload();
-                
-                setDateError('');
-
             }
-        } catch (e) {
-            console.log(e)
-            setDateError('Error occured while creating pass request, Please try again');
-
+        } catch (err) {
+            console.error("Error creating pass request:", err);
+            setError("An error occurred while creating the pass request. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        console.log("use efect called for pass statuses pending || approved ")
-        async function getActivePass() {
-            if (session?.user?.id) {
+        const getActivePass = async () => {
+            if (!studentId) return;
 
-                const res = await axios.get(`/api/pass?studentId=${session?.user?.id}`)
-                
-                if( res.data.length === 0){
+            setLoading(true);
+            try {
+                const res = await axios.get(`/api/pass?studentId=${studentId}`);
+                const passes: Pass[] = Array.isArray(res.data) ? res.data : [];
+
+                const activePass = passes.find(
+                    (p) => p.status === "pending" || p.status === "approved"
+                );
+
+                if (activePass) {
+                    setPass(activePass);
+                    setHasActivePass(1);
+                } else {
                     setHasActivePass(2);
                 }
-                res.data.map((p: Pass) => {
-                    if (p.status === "pending" || p.status === "approved") {
-                        setHasActivePass(1);
-                        setPass(p);
-                    } else {
-                        setHasActivePass(2);
-                    }
-                })
+            } catch (err) {
+                console.error("Error fetching active passes:", err);
+                setError("Failed to load passes.");
+                setHasActivePass(2);
+            } finally {
+                setLoading(false);
             }
-        }
+        };
 
         getActivePass();
-
-    }, [session?.user?.id])
+    }, [studentId]);
 
     useEffect(() => {
-        console.log("use effect of ws for lisning ws messages ")
+        if (hasActivePass === 1 && pass?.status === "approved") {
+            generateQrCode();
+        }
+    }, [hasActivePass, pass]);
+
+    useEffect(() => {
         if (hasActivePass === 1 && pass?.status === "pending") {
-            console.log(hasActivePass)
             try {
                 const socket = new WebSocket('ws://localhost:8080');
                 
@@ -129,110 +177,108 @@ export default function ApplyPass() {
         }
     }, [hasActivePass, pass, studentId]);
 
-    if (hasActivePass === 1 && pass.status === "pending") {
-        return (
-            <div key={pass.id} className="mb-4 p-4 border rounded-lg bg-white">
-                <p className="text-lg font-bold mb-2">{pass.reason}</p>
-                <div className="flex items-center mb-2">
-                    <span
-                        className={`inline-block w-3 h-3 rounded-full mr-2 ${pass.status === "rejected" ? "bg-red-500" : pass.status === "pending" ? "bg-yellow-500" : pass.status === "approved" ? "bg-green-500" : "bg-black"}`}
-                    ></span>
-                    <p className="text-sm font-medium">{pass.status}</p>
-                </div>
-                <p className="text-sm text-gray-600 mb-1">
-                    <strong>Created At:</strong> {new Date(pass.createdAt).toLocaleString()}
-                </p>
-                {pass.status !== "rejected" && (
-                    <>
-                        <p className="text-sm text-gray-600 mb-1">
-                            <strong>Start Time:</strong> {new Date(pass.startTime).toLocaleString()}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-1">
-                            <strong>End Time:</strong> {new Date(pass.endTime).toLocaleString()}
-                        </p>
-                        {pass.actualStartTime && (
-                            <p className="text-sm text-gray-600 mb-1">
-                                <strong>Actual Start Time:</strong> {new Date(pass.actualStartTime).toLocaleString()}
-                            </p>
-                        )}
-                        {pass.actualEndTime && (
-                            <p className="text-sm text-gray-600 mb-1">
-                                <strong>Actual End Time:</strong> {new Date(pass.actualEndTime).toLocaleString()}
-                            </p>
-                        )}
-                    </>
-                )}
-            </div>
-        )
-    }
+    if (loading) return <div>Loading...</div>;
 
-    if (hasActivePass === 1 && pass.status === "approved") {
-        return (
-            <div>
-                Your Pass is Approved
-                <div>
-                    Pass id : {pass.id}
+    if (error) return <div className="text-red-500">Error: {error}</div>;
+
+    if (hasActivePass === 1) {
+        if (pass?.status === "pending") {
+            return (
+                <div key={pass.id} className="mb-4 p-4 border rounded-lg bg-white">
+                    <p className="text-lg font-bold mb-2">{pass.reason}</p>
+                    <div className="flex items-center mb-2">
+                        <span
+                            className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                                pass.status === "pending" ? "bg-yellow-500" : "bg-black"
+                            }`}
+                        ></span>
+                        <p className="text-sm font-medium">{pass.status}</p>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-1">
+                        <strong>Created At:</strong> {new Date(pass.createdAt).toLocaleString()}
+                    </p>
                 </div>
-            </div>
-        )
+            );
+        }
+
+        if (pass?.status === "approved") {
+            return (
+                <div>
+                    Your Pass is Approved
+                    <div>
+                        <Image
+                            src={qrCodeUrl}
+                            alt="Generated QR Code"
+                            width={200}
+                            height={200}
+                        />
+                    </div>
+                </div>
+            );
+        }
     }
 
     if (hasActivePass === 2) {
         return (
-            <div>
-                <div className="p-4 md:p-8">
-                    <div className="max-w-4xl mx-auto bg-white rounded-lg overflow-hidden">
-                        <h1 className="text-2xl font-bold mb-4">Apply for Pass</h1>
-                        <form onSubmit={handleSubmit}>
-                            <div className="mb-4">
-                                <label className="block text-gray-700">Reason:</label>
-                                <input
-                                    type="text"
-                                    value={reason}
-                                    onChange={(e) => setReason(e.target.value)}
-                                    required
-                                    className="mt-1 p-2 w-full border rounded"
-                                />
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-gray-700">Start Time:</label>
-                                <input
-                                    type="time"
-                                    value={startTime}
-                                    onChange={(e) => setStartTime(e.target.value)}
-                                    required
-                                    className="mt-1 p-2 w-full border rounded"
-                                />
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-gray-700">End Time:</label>
-                                <input
-                                    type="time"
-                                    value={endTime}
-                                    onChange={(e) => setEndTime(e.target.value)}
-                                    required
-                                    className="mt-1 p-2 w-full border rounded"
-                                />
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-gray-700">Date:</label>
-                                <input
-                                    type="date"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    required
-                                    className="mt-1 p-2 w-full border rounded"
-                                />
-                                {dateError && <p className="text-red-500 mt-1">{dateError}</p>}
-                            </div>
-                            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Apply</button>
-                        </form>
-                    </div>
+            <div className="p-4 md:p-8">
+                <div className="max-w-4xl mx-auto bg-white rounded-lg overflow-hidden">
+                    <h1 className="text-2xl font-bold mb-4">Apply for Pass</h1>
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-4">
+                            <label className="block text-gray-700">Reason:</label>
+                            <input
+                                type="text"
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                                maxLength={100}
+                                required
+                                className="mt-1 p-2 w-full border rounded"
+                            />
+                            <p className="text-gray-500 text-sm mt-1">{reason.length}/100</p>
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-gray-700">Start Time:</label>
+                            <input
+                                type="time"
+                                value={startTime}
+                                onChange={(e) => setStartTime(e.target.value)}
+                                required
+                                className="mt-1 p-2 w-full border rounded"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-gray-700">End Time:</label>
+                            <input
+                                type="time"
+                                value={endTime}
+                                onChange={(e) => setEndTime(e.target.value)}
+                                required
+                                className="mt-1 p-2 w-full border rounded"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-gray-700">Date:</label>
+                            <input
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                required
+                                className="mt-1 p-2 w-full border rounded"
+                            />
+                            {dateError && <p className="text-red-500 mt-1">{dateError}</p>}
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="bg-blue-500 text-white px-4 py-2 rounded"
+                        >
+                            {loading ? "Submitting..." : "Apply"}
+                        </button>
+                    </form>
                 </div>
             </div>
-        )
-    } else {
-        return <div>Loading....</div>
+        );
     }
 
+    return <div>Loading...</div>;
 }

@@ -11,15 +11,20 @@
   "dependencies": {
     "@prisma/client": "^6.1.0",
     "axios": "^1.7.9",
+    "bcryptjs": "^2.4.3",
+    "html5-qrcode": "^2.3.8",
     "next": "15.1.2",
     "next-auth": "^4.24.11",
     "prisma": "^6.1.0",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recoil": "^0.7.7"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8",
