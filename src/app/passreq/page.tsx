@@ -14,24 +14,45 @@ interface Pass {
     createdAt: string
 }
 
-export default function PendingPasses() {
+async function updateStatus(passId:number,status:string) {
+    // console.log(`pass id ${passId} , status ${status}`)
+    try {
+      const res = await axios.put('/api/pass',{
+        passId,
+        status
+      })
+      // console.log(res);
+      return res;
+      
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+export default function PassReq() {
 
     const [passes, setPasses] = useState<Pass[]>([]);
 
     async function handleAction(id: number, studentId: number, action: string) {
-        try {
-            const socket = new WebSocket('ws://localhost:8080');
-            socket.onopen = () => {
-                socket.send(JSON.stringify({ isStudent: false, passId: id, studentId, status: action }));
-            };
-            socket.onerror = (error) => {
-                console.log("Error in WebSocket connection:", error);
-            };
-            updatePasses(id,"remove");
-            console.log(`pass with if ${id} is ${action}`)
-        } catch (error) {
-            console.error('Error processing pass:', error);
-        }
+        const status = action.toString()
+        updateStatus(id, status).then(res => {
+            if (res && res.status === 200) {
+                try {
+                    const socket = new WebSocket('ws://localhost:8080');
+                    socket.onopen = () => {
+                        socket.send(JSON.stringify({ isStudent: false, passId: id, studentId, status: action }));
+                    };
+                    socket.onerror = (error) => {
+                        console.log("Error in WebSocket connection:", error);
+                    };
+                    updatePasses(id,"remove");
+                    console.log(`pass with if ${id} is ${action}`)
+                } catch (error) {
+                    console.error('Error processing pass:', error);
+            }
+        }}).catch(error => {
+            console.log('Failed to update status:', error)
+        });
     }
 
     function updatePasses(passId: number, action: 'add' | 'remove', newPass?: Pass) {
@@ -94,7 +115,7 @@ export default function PendingPasses() {
                         <p>Reason: {pass.reason}</p>
                         <div className="mt-2 space-x-2">
                             <button
-                                onClick={() => handleAction(pass.id, pass.studentId, 'approved')}
+                                onClick={() => handleAction(pass.id, pass.studentId, "approved")}
                                 className="bg-green-500 text-white px-4 py-2 rounded"
                             >
                                 Approve
@@ -110,5 +131,5 @@ export default function PendingPasses() {
                 ))}
             </ul>
         </div>
-    );
+    );  
 }

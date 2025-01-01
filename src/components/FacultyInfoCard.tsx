@@ -22,7 +22,7 @@ interface FacultyInfoCard {
 
 export default function FacultyInfoCard() {
     const { data: session, status } = useSession()
-    const facultyId = session?.user?.id;
+    const facultyId = (session?.user as { id: number })?.id ;
     const [facultyInfo, setFacultyInfo] = useState<FacultyInfoCard | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 

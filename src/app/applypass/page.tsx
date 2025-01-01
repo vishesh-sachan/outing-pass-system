@@ -21,7 +21,7 @@ interface Pass {
 
 export default function ApplyPass() {
     const { data: session, status } = useSession();
-    const studentId = session?.user?.id;
+    const studentId = (session?.user as { id: number })?.id;
     const [hasActivePass, setHasActivePass] = useState(0); // 0 = loading, 1 = active pass, 2 = no active pass
     const [pass, setPass] = useState<Pass | null>(null);
     const [reason, setReason] = useState("");

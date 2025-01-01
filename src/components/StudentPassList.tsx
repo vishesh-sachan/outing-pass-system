@@ -16,7 +16,7 @@ interface Pass {
 
 export default function StudentPassList() {
     const { data: session, status: sessionStatus } = useSession()
-    const studentId = session?.user?.id;
+    const studentId = (session?.user as { id: number })?.id;
     const [passes, setPasses] = useState<Pass[]>([])
     const [isLoading, setIsLoading] = useState(true)
 

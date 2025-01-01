@@ -26,7 +26,7 @@ interface StudentInfo {
 
 export default function StudentInfoCard() {
     const { data: session, status } = useSession()
-    const studentId = session?.user?.id;
+    const studentId = (session?.user as { id: number })?.id;
     const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
