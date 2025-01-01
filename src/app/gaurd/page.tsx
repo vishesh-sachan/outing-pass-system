@@ -37,14 +37,14 @@ export default function Guard() {
     const role = (session?.user as { role: string })?.role;
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true)
-    
-    
-    
+
+
+
     const startScanning = (scanMode: 'entry' | 'exit') => {
         setMode(scanMode)
         setScanning(true)
     }
-    
+
     useEffect(() => {
         if (sessionStatus !== 'loading') {
             setIsLoading(false);
@@ -81,7 +81,7 @@ export default function Guard() {
                 try {
                     setUpdating(true)
                     const passResponse = await axios.get(`/api/passwithid?id=${scannedData.decodedText.id}`)
-                    
+
                     if (passResponse.data === null) {
                         alert('No pass exists. This is a fake pass.')
                         setMode(null)
@@ -94,17 +94,17 @@ export default function Guard() {
                     const saltRounds = 10;
                     const value = `${scannedData.decodedText.studentId}${scannedData.decodedText.reason}`;
                     // const encryptionKey = await bcrypt.hash(value, saltRounds);
-                    const isLegit = await bcrypt.compare(value,pass.encryptionKey)
+                    const isLegit = await bcrypt.compare(value, pass.encryptionKey)
 
-                    if(pass.status != "approved"){
+                    if (pass.status != "approved") {
                         alert('Pass is Not Approved. Fake Pass')
                         setMode(null)
                         setUpdating(false)
                         return
-                        
+
                     }
-                    
-                    if(!isLegit){
+
+                    if (!isLegit) {
                         alert('Fake Pass !!')
                         setMode(null)
                         setUpdating(false)
@@ -129,22 +129,22 @@ export default function Guard() {
                     }
 
                     const endpoint = '/api/entryexit'
-                    
+
                     const response = await axios.put(endpoint, {
                         passId: scannedData.decodedText.id,
                         mode
                     })
                     // console.log(response)
-                    if(response.status === 200){
-                        if(mode === "exit"){
+                    if (response.status === 200) {
+                        if (mode === "exit") {
                             const { actualstartTime } = response.data.data;
                             alert(`Student Exited college campus at ${new Date(actualstartTime).toLocaleString()}`)
-                        }else{
+                        } else {
                             const { actualendTime } = response.data.data;
                             alert(`Student Entered college campus at ${new Date(actualendTime).toLocaleString()}`)
                         }
-                        
-                    }else if(response.status === 500){
+
+                    } else if (response.status === 500) {
                         alert('Entry failed! Try Again')
                     }
 
@@ -170,7 +170,23 @@ export default function Guard() {
         )
     }
 
-    if(!(role && role === "gaurd")){
+    if (!session) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+                <p className="text-2xl mb-8 text-red-500">You are not signed in. Please sign in to access this page.</p>
+                <div className="space-x-4">
+                    <button
+                        onClick={() => router.push('/api/auth/signin')}
+                        className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition"
+                    >
+                        SignIn
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!role || (role && role == "warden")) {
         return (
             <div className="p-6 flex justify-center items-center">
                 <div className="text-center">
@@ -191,7 +207,7 @@ export default function Guard() {
         return (
             <div className="container mx-auto p-4">
                 <div id="reader"></div>
-                <button 
+                <button
                     onClick={() => setScanning(false)}
                     className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
                 >
@@ -204,25 +220,25 @@ export default function Guard() {
     return (
         <div className="container mx-auto p-4 flex flex-col gap-4">
             {updating ? (
-            <div className="flex items-center justify-center">
-                <div className="loader"></div>
-                <span className="ml-2">Updating...</span>
-            </div>
+                <div className="flex items-center justify-center">
+                    <div className="loader"></div>
+                    <span className="ml-2">Updating...</span>
+                </div>
             ) : (
-            <>
-                <button 
-                onClick={() => startScanning('entry')}
-                className="bg-green-500 text-white px-4 py-2 rounded"
-                >
-                Make Entry
-                </button>
-                <button 
-                onClick={() => startScanning('exit')}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                >
-                Make Exit
-                </button>
-            </>
+                <>
+                    <button
+                        onClick={() => startScanning('entry')}
+                        className="bg-green-500 text-white px-4 py-2 rounded"
+                    >
+                        Make Entry
+                    </button>
+                    <button
+                        onClick={() => startScanning('exit')}
+                        className="bg-blue-500 text-white px-4 py-2 rounded"
+                    >
+                        Make Exit
+                    </button>
+                </>
             )}
         </div>
     )

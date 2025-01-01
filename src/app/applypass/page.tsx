@@ -22,7 +22,7 @@ interface Pass {
 }
 
 export default function ApplyPass() {
-    const { data: session, status } = useSession();
+    const { data: session, status:sessionStatus } = useSession();
     const studentId = (session?.user as { id: number })?.id;
     const role = (session?.user as { role: string })?.role;
     const router = useRouter();
@@ -119,6 +119,12 @@ export default function ApplyPass() {
     };
 
     useEffect(() => {
+        if (sessionStatus !== 'loading') {
+            setLoading(false);
+        }
+    }, [sessionStatus]);
+
+    useEffect(() => {
         const getActivePass = async () => {
             if (!studentId) return;
 
@@ -186,6 +192,22 @@ export default function ApplyPass() {
     if (loading) return <div className="p-6 flex justify-center items-center"> <div>Loading...</div></div>;
 
     if (error) return <div className="text-red-500">Error: {error}</div>;
+
+    if (!session) {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+            <p className="text-2xl mb-8 text-red-500">You are not signed in. Please sign in to access this page.</p>
+            <div className="space-x-4">
+              <button 
+                onClick={() => router.push('/api/auth/signin')} 
+                className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition"
+              >
+                SignIn
+              </button>
+            </div>
+          </div>
+        );
+    }
 
     if (role) {
         return (

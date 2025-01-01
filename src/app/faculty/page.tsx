@@ -26,6 +26,22 @@ export default function Faculty() {
         )
     }
 
+    if (!session) {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+            <p className="text-2xl mb-8 text-red-500">You are not signed in. Please sign in to access this page.</p>
+            <div className="space-x-4">
+              <button 
+                onClick={() => router.push('/api/auth/signin')} 
+                className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition"
+              >
+                SignIn
+              </button>
+            </div>
+          </div>
+        );
+    }
+
     if (role && (role === "warden" || role === "admin")) {
         return (
             <div>
