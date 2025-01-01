@@ -86,7 +86,7 @@ export default function ApplyPass() {
                 setPass(newPass);
                 setHasActivePass(1);
 
-                const socket = new WebSocket("ws://localhost:8080");
+                const socket = new WebSocket("https://websocket-server-production-32b0.up.railway.app");
                 socket.onopen = () => {
                     socket.send(
                         JSON.stringify({
@@ -152,7 +152,7 @@ export default function ApplyPass() {
     useEffect(() => {
         if (hasActivePass === 1 && pass?.status === "pending") {
             try {
-                const socket = new WebSocket('ws://localhost:8080');
+                const socket = new WebSocket('https://websocket-server-production-32b0.up.railway.app');
                 
                 socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);

@@ -38,7 +38,7 @@ export default function PassReq() {
         updateStatus(id, status).then(res => {
             if (res && res.status === 200) {
                 try {
-                    const socket = new WebSocket('ws://localhost:8080');
+                    const socket = new WebSocket('https://websocket-server-production-32b0.up.railway.app');
                     socket.onopen = () => {
                         socket.send(JSON.stringify({ isStudent: false, passId: id, studentId, status: action }));
                     };
@@ -82,7 +82,7 @@ export default function PassReq() {
 
     useEffect(() => {
             try {
-                const socket = new WebSocket('ws://localhost:8080');
+                const socket = new WebSocket('https://websocket-server-production-32b0.up.railway.app');
     
                 socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);
