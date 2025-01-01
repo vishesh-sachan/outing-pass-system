@@ -3,11 +3,13 @@ import StudentInfoCard from "@/components/StudentInfoCard";
 import StudentNavbar from "@/components/StudentNavbar";
 import StudentPassList from "@/components/StudentPassList";
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 export default function Student() {
     const { data: session, status: sessionStatus } = useSession()
     const role = (session?.user as { role: string })?.role;
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -30,6 +32,12 @@ export default function Student() {
                 <div className="text-center">
                     <h2 className="text-2xl font-semibold mb-4">Access Denied</h2>
                     <p className="text-gray-600">You do not have the necessary permissions to view this page.</p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="bg-blue-500 text-white px-6 py-2 my-6 rounded hover:bg-blue-600 transition"
+                    >
+                        Go Back Home Page
+                    </button>
                 </div>
             </div>
         )

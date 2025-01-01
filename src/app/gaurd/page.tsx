@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import bcrypt from 'bcryptjs';
 import axios from 'axios'
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 type ScanResult = {
     decodedText: {
@@ -34,6 +35,7 @@ export default function Guard() {
     const [updating, setUpdating] = useState(false)
     const { data: session, status: sessionStatus } = useSession()
     const role = (session?.user as { role: string })?.role;
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(true)
     
     
@@ -174,6 +176,12 @@ export default function Guard() {
                 <div className="text-center">
                     <h2 className="text-2xl font-semibold mb-4">Access Denied</h2>
                     <p className="text-gray-600">You do not have the necessary permissions to view this page.</p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="bg-blue-500 text-white px-6 py-2 my-6 rounded hover:bg-blue-600 transition"
+                    >
+                        Go Back Home Page
+                    </button>
                 </div>
             </div>
         )

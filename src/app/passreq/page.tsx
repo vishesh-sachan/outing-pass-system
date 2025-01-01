@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
 import FacultyNavbar from '@/components/FacultyNavbar';
+import { useRouter } from 'next/navigation';
 
 interface Pass {
     id: number
@@ -35,8 +36,10 @@ export default function PassReq() {
 
     const { data: session, status: sessionStatus } = useSession()
     const role = (session?.user as { role: string })?.role;
+    const router = useRouter();
     const [passes, setPasses] = useState<Pass[]>([]);
     const [isLoading, setIsLoading] = useState(true)
+    const socketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || '';
     
     useEffect(() => {
         if (sessionStatus !== 'loading') {
@@ -50,7 +53,7 @@ export default function PassReq() {
         updateStatus(id, status).then(res => {
             if (res && res.status === 200) {
                 try {
-                    const socket = new WebSocket('https://websocket-server-production-32b0.up.railway.app');
+                    const socket = new WebSocket(socketUrl);
                     socket.onopen = () => {
                         socket.send(JSON.stringify({ isStudent: false, passId: id, studentId, status: action }));
                     };
@@ -94,7 +97,7 @@ export default function PassReq() {
         
         useEffect(() => {
             try {
-                const socket = new WebSocket('https://websocket-server-production-32b0.up.railway.app');
+                const socket = new WebSocket(socketUrl);
                 
                 socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);
@@ -161,6 +164,12 @@ export default function PassReq() {
             <div className="text-center">
                 <h2 className="text-2xl font-semibold mb-4">Access Denied</h2>
                 <p className="text-gray-600">You do not have the necessary permissions to view this page.</p>
+                <button
+                        onClick={() => router.push('/')}
+                        className="bg-blue-500 text-white px-6 py-2 my-6 rounded hover:bg-blue-600 transition"
+                    >
+                        Go Back Home Page
+                    </button>
             </div>
         </div>
     )
