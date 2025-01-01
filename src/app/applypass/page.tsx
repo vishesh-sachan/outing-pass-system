@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import QRCode, { QRCodeToDataURLOptions } from "qrcode";
 import Image from "next/image";
+import StudentNavbar from "@/components/StudentNavbar";
 
 interface Pass {
     id: number;
@@ -22,6 +23,7 @@ interface Pass {
 export default function ApplyPass() {
     const { data: session, status } = useSession();
     const studentId = (session?.user as { id: number })?.id;
+    const role = (session?.user as { role: string })?.role;
     const [hasActivePass, setHasActivePass] = useState(0); // 0 = loading, 1 = active pass, 2 = no active pass
     const [pass, setPass] = useState<Pass | null>(null);
     const [reason, setReason] = useState("");
@@ -30,7 +32,7 @@ export default function ApplyPass() {
     const [date, setDate] = useState("");
     const [dateError, setDateError] = useState("");
     const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     const generateQrCode = async () => {
@@ -64,7 +66,7 @@ export default function ApplyPass() {
         if (
             selectedDate.toDateString() === currentDate.toDateString() ||
             selectedDate.toDateString() ===
-                new Date(currentDate.setDate(currentDate.getDate() + 1)).toDateString()
+            new Date(currentDate.setDate(currentDate.getDate() + 1)).toDateString()
         ) {
             setDateError("");
         } else {
@@ -153,11 +155,11 @@ export default function ApplyPass() {
         if (hasActivePass === 1 && pass?.status === "pending") {
             try {
                 const socket = new WebSocket('https://websocket-server-production-32b0.up.railway.app');
-                
+
                 socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);
-                    if (!data.isStudent && 
-                        data.studentId === studentId && 
+                    if (!data.isStudent &&
+                        data.studentId === studentId &&
                         data.passId === pass.id) {
                         alert(`Your pass has been ${data.status}`);
                         window.location.reload();
@@ -177,26 +179,39 @@ export default function ApplyPass() {
         }
     }, [hasActivePass, pass, studentId]);
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <div className="p-6 flex justify-center items-center"> <div>Loading...</div></div>;
 
     if (error) return <div className="text-red-500">Error: {error}</div>;
+
+    if (role) {
+        return (
+            <div className="p-6 flex justify-center items-center">
+                <div className="text-center">
+                    <h2 className="text-2xl font-semibold mb-4">Access Denied</h2>
+                    <p className="text-gray-600">You do not have the necessary permissions to view this page.</p>
+                </div>
+            </div>
+        )
+    }
 
     if (hasActivePass === 1) {
         if (pass?.status === "pending") {
             return (
-                <div key={pass.id} className="mb-4 p-4 border rounded-lg bg-white">
-                    <p className="text-lg font-bold mb-2">{pass.reason}</p>
-                    <div className="flex items-center mb-2">
-                        <span
-                            className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                                pass.status === "pending" ? "bg-yellow-500" : "bg-black"
-                            }`}
-                        ></span>
-                        <p className="text-sm font-medium">{pass.status}</p>
+                <div>
+                    <StudentNavbar />
+                    <div key={pass.id} className="mb-4 p-4 border rounded-lg bg-white">
+                        <p className="text-lg font-bold mb-2">{pass.reason}</p>
+                        <div className="flex items-center mb-2">
+                            <span
+                                className={`inline-block w-3 h-3 rounded-full mr-2 ${pass.status === "pending" ? "bg-yellow-500" : "bg-black"
+                                    }`}
+                            ></span>
+                            <p className="text-sm font-medium">{pass.status}</p>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-1">
+                            <strong>Created At:</strong> {new Date(pass.createdAt).toLocaleString()}
+                        </p>
                     </div>
-                    <p className="text-sm text-gray-600 mb-1">
-                        <strong>Created At:</strong> {new Date(pass.createdAt).toLocaleString()}
-                    </p>
                 </div>
             );
         }
@@ -204,7 +219,8 @@ export default function ApplyPass() {
         if (pass?.status === "approved") {
             return (
                 <div>
-                    Your Pass is Approved
+                    <StudentNavbar />
+                    <div> Your Pass is Approved </div>
                     <div>
                         <Image
                             src={qrCodeUrl}
@@ -220,65 +236,66 @@ export default function ApplyPass() {
 
     if (hasActivePass === 2) {
         return (
-            <div className="p-4 md:p-8">
-                <div className="max-w-4xl mx-auto bg-white rounded-lg overflow-hidden">
-                    <h1 className="text-2xl font-bold mb-4">Apply for Pass</h1>
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-4">
-                            <label className="block text-gray-700">Reason:</label>
-                            <input
-                                type="text"
-                                value={reason}
-                                onChange={(e) => setReason(e.target.value)}
-                                maxLength={100}
-                                required
-                                className="mt-1 p-2 w-full border rounded"
-                            />
-                            <p className="text-gray-500 text-sm mt-1">{reason.length}/100</p>
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-gray-700">Start Time:</label>
-                            <input
-                                type="time"
-                                value={startTime}
-                                onChange={(e) => setStartTime(e.target.value)}
-                                required
-                                className="mt-1 p-2 w-full border rounded"
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-gray-700">End Time:</label>
-                            <input
-                                type="time"
-                                value={endTime}
-                                onChange={(e) => setEndTime(e.target.value)}
-                                required
-                                className="mt-1 p-2 w-full border rounded"
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-gray-700">Date:</label>
-                            <input
-                                type="date"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
-                                required
-                                className="mt-1 p-2 w-full border rounded"
-                            />
-                            {dateError && <p className="text-red-500 mt-1">{dateError}</p>}
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-blue-500 text-white px-4 py-2 rounded"
-                        >
-                            {loading ? "Submitting..." : "Apply"}
-                        </button>
-                    </form>
+            <div>
+                <StudentNavbar />
+                <div className="p-4 md:p-8">
+                    <div className="max-w-4xl mx-auto bg-white rounded-lg overflow-hidden">
+                        <h1 className="text-2xl font-bold mb-4">Apply for Pass</h1>
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Reason:</label>
+                                <input
+                                    type="text"
+                                    value={reason}
+                                    onChange={(e) => setReason(e.target.value)}
+                                    maxLength={100}
+                                    required
+                                    className="mt-1 p-2 w-full border rounded"
+                                />
+                                <p className="text-gray-500 text-sm mt-1">{reason.length}/100</p>
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Start Time:</label>
+                                <input
+                                    type="time"
+                                    value={startTime}
+                                    onChange={(e) => setStartTime(e.target.value)}
+                                    required
+                                    className="mt-1 p-2 w-full border rounded"
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-gray-700">End Time:</label>
+                                <input
+                                    type="time"
+                                    value={endTime}
+                                    onChange={(e) => setEndTime(e.target.value)}
+                                    required
+                                    className="mt-1 p-2 w-full border rounded"
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Date:</label>
+                                <input
+                                    type="date"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    required
+                                    className="mt-1 p-2 w-full border rounded"
+                                />
+                                {dateError && <p className="text-red-500 mt-1">{dateError}</p>}
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="bg-blue-500 text-white px-4 py-2 rounded"
+                            >
+                                {loading ? "Submitting..." : "Apply"}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         );
     }
-
-    return <div>Loading...</div>;
 }

@@ -11,7 +11,7 @@ export default function FacultyNavbar() {
                     <div className="flex space-x-4">
                         <a href="/faculty" className="text-white hover:underline">Dashboard</a>
                         <a href="/passreq" className="text-white hover:underline">Pass Requests</a>
-                        <button className="text-white hover:underline" onClick={()=>{signOut()}}>Logout</button>
+                        <button className="text-white hover:underline" onClick={() => { signOut({ callbackUrl: '/api/auth/signin' }) }}>Logout</button>
                     </div>
                 </div>
             </nav>

@@ -40,10 +40,17 @@ export default function StudentPassList() {
         }
     }, [studentId, sessionStatus])
 
+    useEffect(() => {
+        if (passes.length !== 0) {
+            const sortedPasses = [...passes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setPasses(sortedPasses);
+        }
+    }, [passes])
+
     if (sessionStatus === 'loading' || isLoading) {
         return (
             <div className="p-6 flex justify-center items-center">
-                <div>Loading...</div>
+                <div></div>
             </div>
         )
     }

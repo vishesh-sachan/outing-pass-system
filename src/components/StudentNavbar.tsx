@@ -11,7 +11,7 @@ export default function StudentNavbar() {
                     <div className="flex space-x-4">
                         <a href="/student" className="text-white hover:underline">Dashboard</a>
                         <a href="/applypass" className="text-white hover:underline">Apply for Pass</a>
-                        <button className="text-white hover:underline" onClick={()=>{signOut()}}>Logout</button>
+                        <button className="text-white hover:underline" onClick={() => { signOut({ callbackUrl: '/api/auth/signin' }) }}>Logout</button>
                     </div>
                 </div>
             </nav>

@@ -43,6 +43,9 @@ export const authOptions = {
                   session.user.role = existingFaculty.role;
                 return session;
             }
+        },
+        async redirect({ baseUrl }: { baseUrl: string }) {
+            return baseUrl;
         }
     }
 }

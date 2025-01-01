@@ -3,6 +3,7 @@ import { Html5QrcodeScanner } from 'html5-qrcode'
 import { useEffect, useState } from 'react'
 import bcrypt from 'bcryptjs';
 import axios from 'axios'
+import { useSession } from 'next-auth/react';
 
 type ScanResult = {
     decodedText: {
@@ -31,11 +32,22 @@ export default function Guard() {
     const [mode, setMode] = useState<'entry' | 'exit' | null>(null)
     const [scannedData, setScannedData] = useState<ScanResult | null>(null)
     const [updating, setUpdating] = useState(false)
-
+    const { data: session, status: sessionStatus } = useSession()
+    const role = (session?.user as { role: string })?.role;
+    const [isLoading, setIsLoading] = useState(true)
+    
+    
+    
     const startScanning = (scanMode: 'entry' | 'exit') => {
         setMode(scanMode)
         setScanning(true)
     }
+    
+    useEffect(() => {
+        if (sessionStatus !== 'loading') {
+            setIsLoading(false);
+        }
+    }, [sessionStatus]);
 
     useEffect(() => {
         if (scanning) {
@@ -147,6 +159,25 @@ export default function Guard() {
 
         processScan()
     }, [scannedData])
+
+    if (sessionStatus === 'loading' || isLoading) {
+        return (
+            <div className="p-6 flex justify-center items-center">
+                <div>Loading...</div>
+            </div>
+        )
+    }
+
+    if(!(role && role === "gaurd")){
+        return (
+            <div className="p-6 flex justify-center items-center">
+                <div className="text-center">
+                    <h2 className="text-2xl font-semibold mb-4">Access Denied</h2>
+                    <p className="text-gray-600">You do not have the necessary permissions to view this page.</p>
+                </div>
+            </div>
+        )
+    }
 
     if (scanning) {
         return (
