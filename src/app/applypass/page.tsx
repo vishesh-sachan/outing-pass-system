@@ -310,6 +310,11 @@ export default function ApplyPass() {
                             <p className="mb-2"><strong>Status:</strong> {pass.status}</p>
                             <p className="mb-2"><strong>Start Time:</strong> {new Date(pass.startTime).toLocaleString()}</p>
                             <p className="mb-2"><strong>End Time:</strong> {new Date(pass.endTime).toLocaleString()}</p>
+                            {pass.actualstartTime && (
+                                <p className="mb-2">
+                                    <strong>Actual Start Time:</strong> {new Date(pass.actualstartTime).toLocaleString()}
+                                </p>
+                            )}
                             <p className="mb-2"><strong>Created At:</strong> {new Date(pass.createdAt).toLocaleString()}</p>
                             <div className="flex justify-center mt-4">
                                 <Image

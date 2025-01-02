@@ -24,28 +24,22 @@ export default function StudentPassList() {
         async function fetchPasses() {
             if (sessionStatus === 'authenticated' && studentId) {
                 try {
-                    const response = await fetch(`/api/pass?studentId=${studentId}`)
-                    const data = await response.json()
-                    setPasses(data)
+                    const response = await fetch(`/api/pass?studentId=${studentId}`);
+                    const data: Pass[] = await response.json();
+                    const sortedPasses = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    setPasses(sortedPasses);
                 } catch (error) {
-                    console.error('Failed to fetch passes:', error)
+                    console.error('Failed to fetch passes:', error);
                 } finally {
-                    setIsLoading(false)
+                    setIsLoading(false);
                 }
             }
         }
-
+    
         if (sessionStatus !== 'loading') {
-            fetchPasses()
+            fetchPasses();
         }
-    }, [studentId, sessionStatus])
-
-    useEffect(() => {
-        if (passes.length !== 0) {
-            const sortedPasses = [...passes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            setPasses(sortedPasses);
-        }
-    }, [passes])
+    }, [studentId, sessionStatus]);
 
     if (sessionStatus === 'loading' || isLoading) {
         return (
