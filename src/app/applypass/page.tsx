@@ -36,7 +36,7 @@ export default function ApplyPass() {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const socketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || '';
+    const socketUrl = process.env.WEBSOCKET_URL || '';
 
     const generateQrCode = async () => {
         if (!pass) return;
