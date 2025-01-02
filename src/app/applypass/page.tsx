@@ -8,6 +8,26 @@ import Image from "next/image";
 import StudentNavbar from "@/components/StudentNavbar";
 import { useRouter } from "next/navigation";
 
+interface StudentInfo {
+    name: string;
+    email: string;
+    fathersName: string;
+    mothersName: string;
+    course: string;
+    branch: string;
+    year: string;
+    permanentAddress: string;
+    localGaurdiansName: string;
+    localGaurdiansAddress: string;
+    personalPhoneNumber: string;
+    fathersPhoneNumber: string;
+    mothersPhoneNumber: string;
+    localGaurdianPhoneNumber: string;
+    allotedRoomNo: string;
+    hostel: string;
+    dateOfJoining: string;
+}
+
 interface Pass {
     id: number;
     studentId: number;
@@ -25,6 +45,7 @@ export default function ApplyPass() {
     const { data: session, status:sessionStatus } = useSession();
     const studentId = (session?.user as { id: number })?.id;
     const role = (session?.user as { role: string })?.role;
+    const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
     const router = useRouter();
     const [hasActivePass, setHasActivePass] = useState(0); // 0 = loading, 1 = active pass, 2 = no active pass
     const [pass, setPass] = useState<Pass | null>(null);
@@ -36,7 +57,7 @@ export default function ApplyPass() {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const socketUrl = process.env.WEBSOCKET_URL || '';
+    const socketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || '';
 
     const generateQrCode = async () => {
         if (!pass) return;
@@ -123,6 +144,26 @@ export default function ApplyPass() {
             setLoading(false);
         }
     }, [sessionStatus]);
+
+    useEffect(() => {
+        async function getData() {
+            if (studentId) {
+                try {
+                    setLoading(true)
+                    const res = await axios.get(`/api/student?studentId=${studentId}`)
+                    setStudentInfo(res.data)
+                } catch (error) {
+                    console.error('Error fetching student data:', error)
+                } finally {
+                    setLoading(false)
+                }
+            }else{
+                return;
+            }
+        }
+
+        getData()
+    }, [studentId])
 
     useEffect(() => {
         const getActivePass = async () => {
@@ -248,18 +289,38 @@ export default function ApplyPass() {
             );
         }
 
-        if (pass?.status === "approved") {
+        if (studentInfo && pass?.status === "approved") {
             return (
                 <div>
                     <StudentNavbar />
-                    <div> Your Pass is Approved </div>
-                    <div>
-                        <Image
-                            src={qrCodeUrl}
-                            alt="Generated QR Code"
-                            width={200}
-                            height={200}
-                        />
+                    <div className="flex flex-col items-center justify-center mt-8 px-4 sm:px-0">
+                        <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+                            <div className="mt-4">
+                                <h3 className="text-xl font-bold mb-4">Student Information</h3>
+                                <p className="mb-2"><strong>Name:</strong> {studentInfo.name}</p>
+                                <p className="mb-2"><strong>Room No:</strong> {studentInfo.allotedRoomNo}</p>
+                                <p className="mb-2"><strong>Hostel:</strong> {studentInfo.hostel}</p>
+                                <p className="mb-2"><strong>Personal Phone No:</strong> {studentInfo.personalPhoneNumber}</p>
+                                <p className="mb-2"><strong>Father's Name:</strong> {studentInfo.fathersName}</p>
+                                <p className="mb-2"><strong>Father's Phone No:</strong> {studentInfo.fathersPhoneNumber}</p>
+                            </div>
+                            <hr className="my-4" />
+                            <h2 className="text-lg font-semibold mb-2">E-Pass Details</h2>
+                            <p className="mb-2"><strong>Reason:</strong> {pass.reason}</p>
+                            <p className="mb-2"><strong>Status:</strong> {pass.status}</p>
+                            <p className="mb-2"><strong>Start Time:</strong> {new Date(pass.startTime).toLocaleString()}</p>
+                            <p className="mb-2"><strong>End Time:</strong> {new Date(pass.endTime).toLocaleString()}</p>
+                            <p className="mb-2"><strong>Created At:</strong> {new Date(pass.createdAt).toLocaleString()}</p>
+                            <div className="flex justify-center mt-4">
+                                <Image
+                                    src={qrCodeUrl}
+                                    alt="Generated QR Code"
+                                    width={200}
+                                    height={200}
+                                    className="border p-2"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             );

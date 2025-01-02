@@ -39,7 +39,7 @@ export default function PassReq() {
     const router = useRouter();
     const [passes, setPasses] = useState<Pass[]>([]);
     const [isLoading, setIsLoading] = useState(true)
-    const socketUrl = process.env.WEBSOCKET_URL || '';
+    const socketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || '';
     
     useEffect(() => {
         if (sessionStatus !== 'loading') {
