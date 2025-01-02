@@ -33,9 +33,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json()
-        const { name, fathersName, mothersName, course, branch, year, permanentAddress, personalPhoneNumber, fathersPhoneNumber, mothersPhoneNumber, allotedRoomNo, hostel, dateOfJoining, email, password } = body;
+        const { name, fathersName, mothersName, course, branch, year, permanentAddress, personalPhoneNumber, fathersPhoneNumber, mothersPhoneNumber, allotedRoomNo, hostel, dateOfJoining, email } = body;
 
-        if (!name || !fathersName || !mothersName || !course || !branch || !year || !permanentAddress || !personalPhoneNumber || !fathersPhoneNumber || !mothersPhoneNumber || !allotedRoomNo || !hostel || !dateOfJoining || !email || !password) {
+        if (!name || !fathersName || !mothersName || !course || !branch || !year || !permanentAddress || !personalPhoneNumber || !fathersPhoneNumber || !mothersPhoneNumber || !allotedRoomNo || !hostel || !dateOfJoining || !email) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
@@ -54,8 +54,7 @@ export async function POST(req: Request) {
                 allotedRoomNo,
                 hostel,
                 dateOfJoining,
-                email,
-                password
+                email
             },
             select: {
                 id: true

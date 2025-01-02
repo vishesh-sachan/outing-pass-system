@@ -68,7 +68,6 @@ model Student {
   hostel                     Hostel
   dateOfJoining              String
   email                      String   @unique
-  password                   String
   outing                     OutingRequest[]
 }
 
@@ -81,12 +80,11 @@ model faculty {
   personalPhoneNumber   String
   fathersPhoneNumber    String
   mothersPhoneNumber    String
-  allotedRoomNo         String
-  allotedHostel         Hostel
+  allotedRoomNo         String?
+  allotedHostel         Hostel?
   dateOfJoining         String
   role                  Role
   email                 String   @unique
-  password              String
 }
 
 model OutingRequest {
