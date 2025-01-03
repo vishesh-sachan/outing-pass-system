@@ -252,13 +252,13 @@ export default function ApplyPass() {
 
     if (role) {
         return (
-            <div className="p-6 flex justify-center items-center min-h-screen">
-                <div className="text-center max-w-xs sm:max-w-md mx-auto">
+            <div className="p-6 flex justify-center items-center">
+                <div className="text-center">
                     <h2 className="text-2xl font-semibold mb-4">Access Denied</h2>
-                    <p className="text-gray-600 mb-4">You do not have the necessary permissions to view this page.</p>
+                    <p className="text-gray-600">You do not have the necessary permissions to view this page.</p>
                     <button
                         onClick={() => router.push('/')}
-                        className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition w-full sm:w-auto"
+                        className="bg-blue-500 text-white px-6 py-2 my-6 rounded hover:bg-blue-600 transition w-full sm:w-auto"
                     >
                         Go Back Home Page
                     </button>
