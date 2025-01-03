@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useSession } from 'next-auth/react';
 import FacultyNavbar from '@/components/FacultyNavbar';
 import { useRouter } from 'next/navigation';
+import PassStudentInfoCard from '@/components/PassStudentInfoCard';
 
 interface Pass {
     id: number
@@ -17,20 +18,20 @@ interface Pass {
     createdAt: string
 }
 
-async function updateStatus(passId:number,status:string) {
+async function updateStatus(passId: number, status: string) {
     // console.log(`pass id ${passId} , status ${status}`)
     try {
-      const res = await axios.put('/api/pass',{
-        passId,
-        status
-      })
-      // console.log(res);
-      return res;
-      
+        const res = await axios.put('/api/pass', {
+            passId,
+            status
+        })
+        // console.log(res);
+        return res;
+
     } catch (error) {
-      console.log(error);
+        console.log(error);
     }
-  }
+}
 
 export default function PassReq() {
 
@@ -40,7 +41,7 @@ export default function PassReq() {
     const [passes, setPasses] = useState<Pass[]>([]);
     const [isLoading, setIsLoading] = useState(true)
     const socketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || '';
-    
+
     useEffect(() => {
         if (sessionStatus !== 'loading') {
             setIsLoading(false);
@@ -60,65 +61,66 @@ export default function PassReq() {
                     socket.onerror = (error) => {
                         console.log("Error in WebSocket connection:", error);
                     };
-                    updatePasses(id,"remove");
+                    updatePasses(id, "remove");
                     console.log(`pass with if ${id} is ${action}`)
                 } catch (error) {
                     console.error('Error processing pass:', error);
                 }
-            }}).catch(error => {
-                console.log('Failed to update status:', error)
-            });
+            }
+        }).catch(error => {
+            console.log('Failed to update status:', error)
+        });
+    }
+
+    function updatePasses(passId: number, action: 'add' | 'remove', newPass?: Pass) {
+        if (action === 'add' && newPass) {
+            setPasses(prevPasses => [...prevPasses, newPass]);
+        } else if (action === 'remove' && passId) {
+            setPasses(prevPasses => prevPasses.filter(pass => pass.id !== passId));
         }
-        
-        function updatePasses(passId: number, action: 'add' | 'remove', newPass?: Pass) {
-            if (action === 'add' && newPass) {
-                setPasses(prevPasses => [...prevPasses, newPass]);
-            } else if (action === 'remove' && passId) {
-                setPasses(prevPasses => prevPasses.filter(pass => pass.id !== passId));
-            }
+    }
+
+    async function getPassById(passId: number) {
+        try {
+            const res = await axios.get(`/api/passwithid?id=${passId}`)
+            updatePasses(passId, "add", res.data)
+        } catch (error) {
+            console.log(error);
         }
-        
-        async function getPassById(passId:number){
-            try {
-                const res = await axios.get(`/api/passwithid?id=${passId}`)
-                updatePasses(passId,"add",res.data)
-            } catch (error) {
-                console.log(error);
-            }
+    }
+
+    useEffect(() => {
+        async function getPasses() {
+            const res = await axios.get('/api/pendingpass')
+            setPasses(res.data);
         }
-        
-        useEffect(() => {
-            async function getPasses() {
-                const res = await axios.get('/api/pendingpass')
-                setPasses(res.data);
-            }
-            getPasses();
-        }, [])
-        
-        useEffect(() => {
-            try {
-                const socket = new WebSocket(socketUrl);
-                
-                socket.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    if (data.isStudent) {
-                        getPassById(data.passId);
-                    }
-                };
-                
-                socket.onerror = (error) => {
-                    console.log("WebSocket connection error:", error);
-                };
-                
-                return () => {
-                    socket.close();
-                };
-            } catch (error) {
-                console.log("Error setting up WebSocket:", error);
-            }
-            
-        }, []);
-        
+        getPasses();
+    }, [])
+
+    useEffect(() => {
+        try {
+            const socket = new WebSocket(socketUrl);
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.isStudent) {
+                    getPassById(data.passId);
+                }
+            };
+
+            socket.onerror = (error) => {
+                console.log("WebSocket connection error:", error);
+            };
+
+            return () => {
+                socket.close();
+            };
+        } catch (error) {
+            console.log("Error setting up WebSocket:", error);
+        }
+
+    }, []);
+
     if (sessionStatus === 'loading' || isLoading) {
         return (
             <div className="p-6 flex justify-center items-center">
@@ -129,35 +131,40 @@ export default function PassReq() {
 
     if (!session) {
         return (
-          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-            <p className="text-2xl mb-8 text-red-500">You are not signed in. Please sign in to access this page.</p>
-            <div className="space-x-4">
-              <button 
-                onClick={() => router.push('/api/auth/signin')} 
-                className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition"
-              >
-                SignIn
-              </button>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+                <p className="text-xl md:text-2xl mb-8 text-red-500 text-center">You are not signed in. Please sign in to access this page.</p>
+                <div className="space-y-4 md:space-x-4 md:space-y-0">
+                    <button
+                        onClick={() => router.push('/api/auth/signin')}
+                        className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition w-full md:w-auto"
+                    >
+                        SignIn
+                    </button>
+                </div>
             </div>
-          </div>
         );
     }
-    
+
     if (role && (role === "warden" || role === "admin")) {
         return (
             <div>
                 <FacultyNavbar />
-                <div className="p-4">
+                <div className="p-4 flex justify-center items-center">
                     <h1 className="text-2xl font-bold mb-4">Pending Passes</h1>
+                </div>
+                <div className="p-4">
                     <ul className="space-y-4">
                         {passes.map((pass) => (
                             <li key={pass.id} className="border p-4 rounded">
-                                <p>Student: {pass.studentId}</p>
-                                <p>Reason: {pass.reason}</p>
-                                <div className="mt-2 space-x-2">
+                                <div>
+                                    <PassStudentInfoCard studentId={pass.studentId} />
+                                    <p><strong>Reason:</strong> {pass.reason}</p>
+                                    <p><strong>Created At:</strong> {new Date(pass.createdAt).toLocaleString()}</p>
+                                </div>
+                                <div className="mt-2 space-x-2 flex flex-col sm:flex-row">
                                     <button
                                         onClick={() => handleAction(pass.id, pass.studentId, "approved")}
-                                        className="bg-green-500 text-white px-4 py-2 rounded"
+                                        className="bg-green-500 text-white px-4 py-2 rounded mb-2 sm:mb-0"
                                     >
                                         Approve
                                     </button>
@@ -173,19 +180,19 @@ export default function PassReq() {
                     </ul>
                 </div>
             </div>
-        );  
+        );
     }
     return (
-        <div className="p-6 flex justify-center items-center">
+        <div className="p-6 flex justify-center items-center min-h-screen">
             <div className="text-center">
                 <h2 className="text-2xl font-semibold mb-4">Access Denied</h2>
-                <p className="text-gray-600">You do not have the necessary permissions to view this page.</p>
+                <p className="text-gray-600 mb-4">You do not have the necessary permissions to view this page.</p>
                 <button
-                        onClick={() => router.push('/')}
-                        className="bg-blue-500 text-white px-6 py-2 my-6 rounded hover:bg-blue-600 transition"
-                    >
-                        Go Back Home Page
-                    </button>
+                    onClick={() => router.push('/')}
+                    className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition w-full sm:w-auto"
+                >
+                    Go Back Home Page
+                </button>
             </div>
         </div>
     )

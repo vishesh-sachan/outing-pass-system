@@ -172,12 +172,12 @@ export default function Guard() {
 
     if (!session) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-                <p className="text-2xl mb-8 text-red-500">You are not signed in. Please sign in to access this page.</p>
-                <div className="space-x-4">
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+                <p className="text-xl md:text-2xl mb-8 text-red-500 text-center">You are not signed in. Please sign in to access this page.</p>
+                <div className="space-y-4 md:space-x-4">
                     <button
                         onClick={() => router.push('/api/auth/signin')}
-                        className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition"
+                        className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition w-full md:w-auto"
                     >
                         SignIn
                     </button>
@@ -194,7 +194,7 @@ export default function Guard() {
                     <p className="text-gray-600">You do not have the necessary permissions to view this page.</p>
                     <button
                         onClick={() => router.push('/')}
-                        className="bg-blue-500 text-white px-6 py-2 my-6 rounded hover:bg-blue-600 transition"
+                        className="bg-blue-500 text-white px-6 py-2 my-6 rounded hover:bg-blue-600 transition w-full sm:w-auto"
                     >
                         Go Back Home Page
                     </button>
