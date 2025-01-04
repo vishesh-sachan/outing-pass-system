@@ -1,9 +1,30 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
 export async function GET(req: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { user } = session;
+    if (!user.role) {
+        try{
+            const { searchParams } = new URL(req.url);
+            const id = searchParams.get("studentId");
+            const studentId = Number(id);
+            if(studentId != user.id){
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        }catch(error){
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+    }
+
     try {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get("studentId");
@@ -31,6 +52,16 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { user } = session;
+    if (!user || user.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     try {
         const body = await req.json()
         const { name, fathersName, mothersName, course, branch, year, permanentAddress, personalPhoneNumber, fathersPhoneNumber, mothersPhoneNumber, allotedRoomNo, hostel, dateOfJoining, email } = body;
@@ -70,6 +101,16 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { user } = session;
+    if (!user || user.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     try {
         const body = await req.json()
         const { id, name, fathersName, mothersName, course, branch, year, permanentAddress, personalPhoneNumber, fathersPhoneNumber, mothersPhoneNumber, allotedRoomNo, hostel, dateOfJoining, email } = body;
@@ -114,6 +155,16 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { user } = session;
+    if (!user || user.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     try {
         const { searchParams } = new URL(req.url);
         const studentId = searchParams.get("studentId");

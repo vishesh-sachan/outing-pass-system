@@ -1,15 +1,36 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import bcrypt from 'bcryptjs';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
 export async function GET(req: Request) {
+   const session = await getServerSession(authOptions);
+   if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   }
+
+   const { user } = session;
+   if (!user.role) {
+      try{
+         const { searchParams } = new URL(req.url);
+         const id = searchParams.get("studentId");
+         const studentId = Number(id);
+         if(studentId != user.id){
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      }catch(error){
+         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+   }
+
    try {
       const { searchParams } = new URL(req.url);
       const all = searchParams.get("all");
       const id = searchParams.get("studentId");
-      const studentId = Number(id)
+      const studentId = Number(id);
 
       let res;
       if (!studentId && !all) {
@@ -38,40 +59,69 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-   try {
+   const session = await getServerSession(authOptions);
+   if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   }
+
+   const { user } = session;
+   if (!user.role) {
       const body = await req.json();
       const { studentId, reason, startTime, endTime } = body;
-
-      if (!studentId || !reason || !startTime || !endTime) {
-         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      try{
+         if(studentId != user.id){
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+         }else{
+            try {
+         
+               if (!studentId || !reason || !startTime || !endTime) {
+                  return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+               }
+         
+               const saltRounds = 10;
+               const value = `${studentId}${reason}`;
+               const encryptionKey = await bcrypt.hash(value, saltRounds);
+         
+               const res = await prisma.outingRequest.create({
+                  data: {
+                     studentId: Number(studentId),
+                     reason,
+                     startTime: new Date(startTime),
+                     endTime: new Date(endTime),
+                     createdAt: new Date(),
+                     encryptionKey
+                  },
+                  select: {
+                     id: true,
+                  },
+               });
+         
+               return NextResponse.json({ id: res.id }, { status: 201 });
+            } catch (error) {
+               console.log(error);
+               return NextResponse.json({ error: "Error creating outing request" }, { status: 500 });
+            }
+         }
+      }catch(error){
+         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-
-      const saltRounds = 10;
-      const value = `${studentId}${reason}`;
-      const encryptionKey = await bcrypt.hash(value, saltRounds);
-
-      const res = await prisma.outingRequest.create({
-         data: {
-            studentId: Number(studentId),
-            reason,
-            startTime: new Date(startTime),
-            endTime: new Date(endTime),
-            createdAt: new Date(),
-            encryptionKey
-         },
-         select: {
-            id: true,
-         },
-      });
-
-      return NextResponse.json({ id: res.id }, { status: 201 });
-   } catch (error) {
-      // console.error("Error creating outing request:", error);
-      return NextResponse.json({ error: "Error creating outing request" }, { status: 500 });
+   }else{
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
    }
+
 }
 
 export async function PUT(req: Request) {
+   const session = await getServerSession(authOptions);
+   if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   }
+
+   const { user } = session;
+   if (!user || (user.role !== "admin" && user.role !== "warden")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+   }
+
    try {
       const body = await req.json();
       const { passId, status } = body;
@@ -109,6 +159,16 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+   const session = await getServerSession(authOptions);
+   if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   }
+
+   const { user } = session;
+   if (!user || user.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+   }
+
    try {
       const { searchParams } = new URL(req.url);
       const passId = searchParams.get("passId");
