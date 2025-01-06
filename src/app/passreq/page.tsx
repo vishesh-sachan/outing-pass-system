@@ -161,16 +161,16 @@ export default function PassReq() {
                                     <p><strong>Reason:</strong> {pass.reason}</p>
                                     <p><strong>Created At:</strong> {new Date(pass.createdAt).toLocaleString()}</p>
                                 </div>
-                                <div className="mt-2 space-x-2 flex flex-col sm:flex-row">
+                                <div className="mt-2 space-x-0 sm:space-x-2 flex flex-col sm:flex-row">
                                     <button
                                         onClick={() => handleAction(pass.id, pass.studentId, "approved")}
-                                        className="bg-green-500 text-white px-4 py-2 rounded mb-2 sm:mb-0"
+                                        className="bg-green-500 text-white px-4 py-2 rounded mb-2 sm:mb-0 w-full sm:w-auto"
                                     >
                                         Approve
                                     </button>
                                     <button
                                         onClick={() => handleAction(pass.id, pass.studentId, 'rejected')}
-                                        className="bg-red-500 text-white px-4 py-2 rounded"
+                                        className="bg-red-500 text-white px-4 py-2 rounded mb-2 sm:mb-0 w-full sm:w-auto"
                                     >
                                         Reject
                                     </button>
