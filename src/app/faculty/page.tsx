@@ -1,6 +1,7 @@
 'use client'
 import FacultyInfoCard from "@/components/FacultyInfoCard"
 import FacultyNavbar from "@/components/FacultyNavbar"
+import PassOverveiw from "@/components/PassOverview";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -47,6 +48,7 @@ export default function Faculty() {
             <div>
                 <FacultyNavbar />
                 <FacultyInfoCard />
+                <PassOverveiw />
             </div>
         )
     }

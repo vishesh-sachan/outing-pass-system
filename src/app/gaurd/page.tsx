@@ -5,6 +5,8 @@ import bcrypt from 'bcryptjs';
 import axios from 'axios'
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import CheckInNcheckOut from '@/components/CheckInNcheckOut';
+import GuardNavbar from '@/components/GuardNavbar';
 
 type ScanResult = {
     decodedText: {
@@ -226,18 +228,20 @@ export default function Guard() {
                 </div>
             ) : (
                 <>
+                    <GuardNavbar />
                     <button
                         onClick={() => startScanning('entry')}
                         className="bg-green-500 text-white px-4 py-2 rounded"
                     >
-                        Make Entry
+                        Check In
                     </button>
                     <button
                         onClick={() => startScanning('exit')}
                         className="bg-blue-500 text-white px-4 py-2 rounded"
                     >
-                        Make Exit
+                        Check Out
                     </button>
+                    <CheckInNcheckOut />
                 </>
             )}
         </div>
